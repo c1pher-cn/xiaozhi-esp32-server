@@ -92,7 +92,7 @@ class ConnectionHandler:
         self.auth_code_gen = AuthCodeGenerator.get_instance()
         self.is_device_verified = False  # 添加设备验证状态标志
         self.music_handler = _music
-        self.hass_handler = _hass
+        #self.hass_handler = _hass
         self.close_after_chat = False  # 是否在聊天结束后关闭连接
         self.use_function_call_mode = False
         if self.config["selected_module"]["Intent"] == 'function_call':

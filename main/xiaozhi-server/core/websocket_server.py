@@ -52,6 +52,7 @@ class WebSocketServer:
                 self.config["delete_audio"]
             ),
             MusicHandler(self.config),
+            HassHandler(self.config),
             memory.create_instance(memory_cls_name, memory_cfg),
             intent.create_instance(
                 self.config["selected_module"]["Intent"]
