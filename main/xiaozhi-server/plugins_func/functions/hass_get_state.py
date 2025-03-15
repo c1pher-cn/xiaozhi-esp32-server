@@ -44,9 +44,8 @@ hass_get_state_function_desc ={
 
 
 @register_function("hass_get_state", hass_get_state_function_desc, ToolType.SYSTEM_CTL)
-def hass_get_state(conn, arguments):
+def hass_get_state(conn, entity_id=''):
     try:
-      entity_id = arguments["entity_id"]
 
       future = asyncio.run_coroutine_threadsafe(              
         conn.hass_handler.hass_get_state(conn, entity_id),

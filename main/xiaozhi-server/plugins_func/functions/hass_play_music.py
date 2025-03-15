@@ -29,12 +29,15 @@ hass_play_music_function_desc = {
 
 
 @register_function('hass_play_music', hass_play_music_function_desc, ToolType.SYSTEM_CTL)
-def play_music(conn, arguments):
+#def hass_play_music(conn, arguments):
+def hass_play_music(conn, entity_id='', media_content_id='random'):
     try:
-        music_intent = f"播放音乐 {song_name}" if song_name != "random" else "随机播放音乐"
+        #logger.bind(tag=TAG).error(f"arguments: {arguments}")
         
-        entity_id = arguments["entity_id"]
-        media_content_id = arguments["media_content_id"]
+        #entity_id = arguments["entity_id"]
+        #media_content_id = arguments["media_content_id"]
+        
+        #logger.bind(tag=TAG).error(f"entity_id: {entity_id}")
 
 
         # 执行音乐播放命令
@@ -42,7 +45,7 @@ def play_music(conn, arguments):
             conn.hass_handler.hass_play_music(conn, entity_id, media_content_id),
             conn.loop
         )
-        future.result()
+        ha_response = future.result()
         return ActionResponse(action=Action.RESPONSE, result="退出意图已处理", response=ha_response)
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")

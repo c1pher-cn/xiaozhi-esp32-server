@@ -129,12 +129,14 @@ class HassHandler:
             return f"设置失败，错误码: {response.status_code}"
 
 
+
     async def hass_toggle_device(self, conn, entity_id, state):
         domains = entity_id.split(".")
         if len(domains) > 1:
             domain = domains[0]
         else:
             return "执行失败，错误的设备id"
+
         if state == "on":
             description = "打开"
             if domain == 'cover':
@@ -167,8 +169,7 @@ class HassHandler:
             return f"设备已{description}"
         else:
             return f"切换失败，错误码: {response.status_code}"
-
-async def hass_play_music(self, conn, entity_id, media_content_id):
+    async def hass_play_music(self, conn, entity_id, media_content_id):
         url = f"{self.base_url}/api/services/music_assistant/play_media"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
