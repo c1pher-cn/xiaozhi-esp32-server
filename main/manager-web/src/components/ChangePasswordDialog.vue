@@ -1,6 +1,6 @@
 <template>
   <form>
-    <el-dialog :visible.sync="value" width="400px" center>
+    <el-dialog :visible.sync="dialogVisible"  width="24%" center>
       <div
         style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
         <div
@@ -60,9 +60,18 @@ export default {
   },
   data() {
     return {
+      dialogVisible: this.value,
       oldPassword: "",
       newPassword: "",
       confirmNewPassword: ""
+    }
+  },
+  watch: {
+    value(val) {
+      this.dialogVisible = val;
+    },
+    dialogVisible(val) {
+      this.$emit('input', val);
     }
   },
   methods: {
@@ -101,7 +110,7 @@ export default {
       this.$emit('input', false);
     },
     cancel() {
-      this.$emit('input', false);
+      this.dialogVisible = false;
       this.resetForm();
     },
     resetForm() {

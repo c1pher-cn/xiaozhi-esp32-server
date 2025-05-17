@@ -102,48 +102,10 @@ VAD:
 
 ### 7、我想通过小智控制电灯、空调、远程开关机等操作 💡
 
-本项目，支持以工具调用的方式控制HomeAssistant设备
-
-1、首先选择一款支持function call支持的LLM，例如`ChatGLMLLM`。
-
-2、在配置文件中，将 `selected_module.Intent` 设置为 `function_call`。
-
-3、登录`HomeAssistant`，点击`左下角个人`，切换`安全`导航栏，划到底部`长期访问令牌`生成api_key。
-
-在配置文件中，配置好你的home assistant的`devices`（被控制的设备）和`api_key`和`base_url`等信息。例如：
-
-``` yaml 
-plugins
-  home_assistant:
-    devices:
-      - 客厅,玩具灯,switch.cuco_cn_460494544_cp1_on_p_2_1
-      - 卧室,台灯,switch.iot_cn_831898993_socn1_on_p_2_1
-    base_url: http://你的homeassistant地址:8123
-    api_key: 你的home assistant api访问令牌
-```
-
-最后，允许function_call 插件在配置文件中启用`hass_get_state`(必须)、`hass_set_state`(必须)、`hass_play_music`(不想用ha听音乐可以不启动)，例如：
-
-``` yaml 
-Intent:
-  ...
-  function_call:
-    type: nointent
-    functions:
-      - change_role
-      - get_weather
-      - get_news
-      - hass_get_state
-      - hass_set_state
-      - hass_play_music
-```
+参考教程[ESP32设备与HomeAssistant集成指南](./homeassistant-integration.md)
 
 ### 8、更多问题，可联系我们反馈 💬
 
-我们的联系方式放在[百度网盘中,点击前往](https://pan.baidu.com/s/1x6USjvP1nTRsZ45XlJu65Q)，提取码是`223y`。
+可以在[issues](https://github.com/xinnan-tech/xiaozhi-esp32-server/issues)提交您的问题。
 
-网盘里有"硬件烧录QQ群"、"开源服务端交流群"、"产品建议联系人" 三张图片，请根据需要选择加入。
-
-- 硬件烧录QQ群：适用于硬件烧录问题
-- 开源服务端交流群：适用于服务端问题
-- 产品建议联系人：适用于产品功能、产品设计等建议 
+也可以发邮件我们取得联系：huangrongzhuang@xin-nan.com

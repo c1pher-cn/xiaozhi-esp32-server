@@ -20,7 +20,9 @@ public class SysUserUtilServiceImpl extends BaseServiceImpl<SysUserDao, SysUserE
     @Override
     public void assignUsername(Long userId, Consumer<String> setter) {
         String userIdKey = RedisKeys.getUserIdKey(userId);
-        String username = redisUtils.get(userIdKey).toString();
+
+        Object value = redisUtils.get(userIdKey);
+        String username = (value != null) ? value.toString() : null;
         if(username != null){
             setter.accept(username);
         }else {

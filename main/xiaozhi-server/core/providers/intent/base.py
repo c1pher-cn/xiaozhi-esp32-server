@@ -9,18 +9,6 @@ logger = setup_logging()
 class IntentProviderBase(ABC):
     def __init__(self, config):
         self.config = config
-        self.intent_options = [
-            {
-                "name": "handle_exit_intent",
-                "desc": "结束聊天, 用户发来如再见之类的表示结束的话, 不想再进行对话的时候",
-            },
-            {
-                "name": "play_music",
-                "desc": "播放音乐, 用户希望你可以播放音乐, 只用于播放音乐的意图",
-            },
-            {"name": "get_time", "desc": "获取今天日期或者当前时间信息"},
-            {"name": "continue_chat", "desc": "继续聊天"},
-        ]
 
     def set_llm(self, llm):
         self.llm = llm

@@ -1,5 +1,7 @@
 package xiaozhi.modules.sys.vo;
 
+import java.util.Date;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -23,4 +25,7 @@ public class AdminPageUserVO {
 
     @Schema(description = "用户id")
     private String userid;
+
+    @Schema(description = "注册时间")
+    private Date createDate;
 }

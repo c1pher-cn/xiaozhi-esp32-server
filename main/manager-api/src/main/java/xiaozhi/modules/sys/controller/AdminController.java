@@ -58,7 +58,6 @@ public class AdminController {
         dto.setLimit((String) params.get(Constant.LIMIT));
         dto.setPage((String) params.get(Constant.PAGE));
         ValidatorUtils.validateEntity(dto);
-        ValidatorUtils.validateEntity(dto);
         PageData<AdminPageUserVO> page = sysUserService.page(dto);
         return new Result<PageData<AdminPageUserVO>>().ok(page);
     }
@@ -84,7 +83,7 @@ public class AdminController {
     @Operation(summary = "批量修改用户状态")
     @RequiresPermissions("sys:role:superAdmin")
     @Parameter(name = "status", description = "用户状态", required = true)
-    public Result<Void> changeStatus(@PathVariable Integer status, @RequestBody Long[] userIds) {
+    public Result<Void> changeStatus(@PathVariable Integer status, @RequestBody String[] userIds) {
         sysUserService.changeStatus(status, userIds);
         return new Result<Void>();
     }

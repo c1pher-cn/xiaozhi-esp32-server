@@ -360,8 +360,8 @@ onUnmounted(() => {
   left: -14px;
   width: 30px;
   height: 60px;
-  -webkit-appearance: slider-vertical;
-  writing-mode: bt-lr;
+  writing-mode: vertical-lr;
+  direction: rtl;
   opacity: 0;
   cursor: pointer;
   z-index: 2;

@@ -1,6 +1,6 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" width="975px" center custom-class="custom-dialog" :show-close="false"
-    class="center-dialog">
+  <el-dialog :visible.sync="dialogVisible" width="57%" center custom-class="custom-dialog" :show-close="false"
+    class="center-dialog" >
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         修改模型
@@ -17,7 +17,7 @@
             <span style="margin-right: 8px;">是否启用</span>
             <el-switch v-model="form.isEnabled" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: none; align-items: center;">
             <span style="margin-right: 8px;">设为默认</span>
             <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
@@ -44,7 +44,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sort" style="flex: 1;">
-            <el-input v-model="form.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
+            <el-input v-model.number="form.sort" type="number" placeholder="请输入排序号" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
@@ -53,7 +53,7 @@
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注"
+          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注" :autosize="{ minRows: 3, maxRows: 5 }"
             class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
@@ -61,20 +61,13 @@
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
       <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="form.configJson" ref="callInfoForm" label-width="100px" label-position="left" class="custom-form">
+      <el-form :model="form.configJson" ref="callInfoForm" label-width="auto" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
-            <el-form-item v-for="field in row"
-              :key="field.prop"
-              :label="field.label"
-              :prop="field.prop"
+            <el-form-item v-for="field in row" :key="field.prop" :label="field.label" :prop="field.prop"
               style="flex: 1;">
-              <el-input
-                v-model="form.configJson[field.prop]"
-                :placeholder="field.placeholder"
-                :type="field.type || 'text'"
-                class="custom-input-bg"
-                :show-password="field.type === 'password'">
+              <el-input v-model="form.configJson[field.prop]" :placeholder="field.placeholder" :type="field.type"
+                class="custom-input-bg" :show-password="field.type === 'password'">
               </el-input>
             </el-form-item>
           </div>
@@ -83,7 +76,12 @@
     </div>
 
     <div style="display: flex;justify-content: center;">
-      <el-button type="primary" @click="handleSave" class="save-btn">
+      <el-button
+        type="primary"
+        @click="handleSave"
+        class="save-btn"
+        :loading="saving"
+        :disabled="saving">
         保存
       </el-button>
     </div>
@@ -92,26 +90,6 @@
 
 <script>
 import Api from '@/apis/api';
-
-const DEFAULT_CONFIG_JSON = {
-  type: "",
-  base_url: "",
-  model_name: "",
-  api_key: "",
-  raw: {},
-  config: {
-    keyComparator: {},
-    ignoreError: false,
-    ignoreCase: false,
-    dateFormat: "",
-    ignoreNullValue: false,
-    transientSupport: false,
-    stripTrailingZeros: false,
-    checkDuplicate: false,
-    order: false
-  },
-  empty: false
-};
 
 export default {
   name: "ModelEditDialog",
@@ -129,6 +107,11 @@ export default {
       dialogVisible: this.visible,
       providers: [],
       providersLoaded: false,
+      saving: false,
+      allProvidersData: null,
+      pendingProviderType: null,
+      pendingModelData: null,
+      dynamicCallInfoFields: [],
       form: {
         id: "",
         modelType: "",
@@ -139,65 +122,24 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+        configJson: {}
       }
     };
   },
   computed: {
-    callInfoFields() {
-      const fieldsMap = {
-        llm: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        vad: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
-            { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
-            { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        asr: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        intent: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: 'LLM模型', prop: 'llm', placeholder: '请输入llm' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        tts: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        memory: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ]
-      };
-
-      return fieldsMap[this.modelType] || [];
-    },
     chunkedCallInfoFields() {
       const chunkSize = 2;
       const result = [];
-      for (let i = 0; i < this.callInfoFields.length; i += chunkSize) {
-        result.push(this.callInfoFields.slice(i, i + chunkSize));
+      for (let i = 0; i < this.dynamicCallInfoFields.length; i += chunkSize) {
+        result.push(this.dynamicCallInfoFields.slice(i, i + chunkSize));
       }
       return result;
     },
   },
   watch: {
     modelType() {
-      this.resetProviders()
+      this.resetProviders();
+      this.loadProviders();
     },
     dialogVisible(val) {
       this.$emit('update:visible', val);
@@ -209,6 +151,14 @@ export default {
     },
     visible(val) {
       this.dialogVisible = val;
+      if (val) {
+        this.loadProviders();
+      }
+    },
+    'form.configJson.type'(newVal) {
+      if (newVal && this.providersLoaded) {
+        this.loadProviderFields(newVal);
+      }
     }
   },
   methods: {
@@ -223,8 +173,11 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+        configJson: {}
       };
+      this.dynamicCallInfoFields.forEach(field => {
+        this.$set(this.form.configJson, field.prop, '');
+      });
     },
     resetProviders() {
       this.providers = [];
@@ -235,47 +188,24 @@ export default {
         Api.model.getModelConfig(this.modelData.id, ({ data }) => {
           if (data.code === 0 && data.data) {
             const model = data.data;
+            this.pendingProviderType = model.configJson.type;
+            this.pendingModelData = model;
 
-            let configJson = model.configJson || {};
-            if (typeof configJson !== 'object' || Array.isArray(configJson)) {
-              console.warn('Invalid configJson format, using default');
-              configJson = {};
+            if (this.providersLoaded) {
+              this.loadProviderFields(model.configJson.type);
+            } else {
+              this.loadProviders();
             }
-
-            this.callInfoFields.forEach(field => {
-              if (!configJson.hasOwnProperty(field.prop)) {
-                configJson[field.prop] = '';
-              }
-            });
-
-            this.form = {
-              id: model.id || "",
-              modelType: model.modelType || "",
-              modelCode: model.modelCode || "",
-              modelName: model.modelName || "",
-              isDefault: model.isDefault || 0,
-              isEnabled: model.isEnabled || 0,
-              docLink: model.docLink || "",
-              remark: model.remark || "",
-              sort: model.sort || 0,
-              configJson: {
-                ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
-                ...configJson,
-                config: {
-                  ...DEFAULT_CONFIG_JSON.config,
-                  ...(configJson.config || {})
-                }
-              }
-            };
           }
         });
       }
     },
     handleSave() {
+      this.saving = true; // 开始保存加载
+
       const provideCode = this.form.configJson.type;
-      const { provider, ...restConfigJson } = this.form.configJson;
       const formData = {
-        id: this.form.id,
+        id: this.modelData.id,
         modelCode: this.form.modelCode,
         modelName: this.form.modelName,
         isDefault: this.form.isDefault ? 1 : 0,
@@ -284,16 +214,22 @@ export default {
         remark: this.form.remark,
         sort: this.form.sort || 0,
         configJson: {
-          ...restConfigJson,
-          config: {
-            ...restConfigJson.config,
-            ignoreError: !!restConfigJson.config?.ignoreError,
-            ignoreCase: !!restConfigJson.config?.ignoreCase,
-          }
+          ...this.form.configJson,
         }
       };
-      this.$emit("save", { provideCode, formData });
-      this.dialogVisible = false;
+
+      this.$emit("save", {
+        provideCode,
+        formData,
+        done: () => {
+          this.saving = false; // 保存完成后回调
+        }
+      });
+
+      // 如果父组件不处理done回调，3秒后自动关闭加载状态
+      setTimeout(() => {
+        this.saving = false;
+      }, 3000);
     },
     loadProviders() {
       if (this.providersLoaded) return;
@@ -301,16 +237,66 @@ export default {
       Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
-          value: item.providerCode
+          value: String(item.providerCode)
         }));
         this.providersLoaded = true;
+
+        this.allProvidersData = data;
+
+        if (this.pendingProviderType) {
+          this.loadProviderFields(this.pendingProviderType);
+        }
       });
     },
+    loadProviderFields(providerCode) {
+      if (this.allProvidersData) {
+        const provider = this.allProvidersData.find(p => p.providerCode === providerCode);
+        if (provider) {
+          this.dynamicCallInfoFields = JSON.parse(provider.fields || '[]').map(f => ({
+            label: f.label,
+            prop: f.key,
+            type: f.type === 'password' ? 'password' : 'text',
+            placeholder: `请输入${f.label}`
+          }));
+
+          if (this.pendingModelData && this.pendingProviderType === providerCode) {
+            this.processModelData(this.pendingModelData);
+            this.pendingModelData = null;
+            this.pendingProviderType = null;
+          }
+        }
+      }
+    },
+    processModelData(model) {
+      let configJson = model.configJson || {};
+      this.dynamicCallInfoFields.forEach(field => {
+        if (!configJson.hasOwnProperty(field.prop)) {
+          configJson[field.prop] = '';
+        } else if (typeof configJson[field.prop] !== 'string') {
+          configJson[field.prop] = String(configJson[field.prop]);
+        }
+      });
+
+      this.form = {
+        id: model.id,
+        modelType: model.modelType,
+        modelCode: model.modelCode,
+        modelName: model.modelName,
+        isDefault: model.isDefault,
+        isEnabled: model.isEnabled,
+        docLink: model.docLink,
+        remark: model.remark,
+        sort: Number(model.sort) || 0,
+        configJson: {
+          ...configJson
+        }
+      };
+    }
   }
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .custom-dialog {
   position: relative;
   border-radius: 20px;
@@ -330,11 +316,6 @@ export default {
   justify-content: center;
 }
 
-.center-dialog .el-dialog {
-  margin: 4% 0 auto !important;
-  display: flex;
-  flex-direction: column;
-}
 
 .custom-close-btn {
   position: absolute;

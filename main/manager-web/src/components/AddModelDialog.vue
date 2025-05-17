@@ -1,11 +1,10 @@
 <template>
-  <el-dialog :visible.sync="visible" width="975px" center custom-class="custom-dialog" :show-close="false"
-    class="center-dialog">
+  <el-dialog :visible="dialogVisible" @update:visible="handleVisibleChange" width="57%" center
+    custom-class="custom-dialog" :show-close="false" class="center-dialog">
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         添加模型
       </div>
-
 
       <button class="custom-close-btn" @click="handleClose">
         ×
@@ -19,7 +18,7 @@
             <span style="margin-right: 8px;">是否启用</span>
             <el-switch v-model="formData.isEnabled" class="custom-switch"></el-switch>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: none; align-items: center;">
             <span style="margin-right: 8px;">设为默认</span>
             <el-switch v-model="formData.isDefault" class="custom-switch"></el-switch>
           </div>
@@ -45,7 +44,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sortOrder" style="flex: 1;">
-            <el-input v-model="formData.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
+            <el-input v-model="formData.sort" type="number" placeholder="请输入排序号" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
@@ -55,7 +54,7 @@
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
-          <el-input v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入模型备注"
+          <el-input v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入模型备注" :autosize="{ minRows: 3, maxRows: 5 }"
             class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
@@ -63,21 +62,13 @@
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
       <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="formData.configJson" label-width="100px" label-position="left" class="custom-form">
+      <el-form :model="formData.configJson" label-width="auto" label-position="left" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
-            <el-form-item
-              v-for="field in row"
-              :key="field.prop"
-              :label="field.label"
-              :prop="field.prop"
+            <el-form-item v-for="field in row" :key="field.prop" :label="field.label" :prop="field.prop"
               style="flex: 1;">
-              <el-input
-                v-model="formData.configJson[field.prop]"
-                :placeholder="field.placeholder"
-                :type="field.type || 'text'"
-                class="custom-input-bg"
-                :show-password="field.type === 'password'">
+              <el-input v-model="formData.configJson[field.prop]" :placeholder="field.placeholder"
+                :type="field.type || 'text'" class="custom-input-bg" :show-password="field.type === 'password'">
               </el-input>
             </el-form-item>
           </div>
@@ -86,7 +77,12 @@
     </div>
 
     <div style="display: flex;justify-content: center;">
-      <el-button type="primary" @click="confirm" class="save-btn">
+      <el-button
+        type="primary"
+        @click="confirm"
+        class="save-btn"
+        :loading="saving"
+        :disabled="saving">
         保存
       </el-button>
     </div>
@@ -103,7 +99,9 @@ export default {
   },
   data() {
     return {
+      saving: false,
       providers: [],
+      dialogVisible: false,
       providersLoaded: false,
       providerFields: [],
       currentProvider: null,
@@ -122,8 +120,11 @@ export default {
   },
   watch: {
     visible(val) {
-      if(val) {
+      this.dialogVisible = val;
+      if (val) {
         this.initConfigJson();
+      } else {
+        this.resetForm();
       }
     },
     'formData.supplier'(newVal) {
@@ -171,6 +172,18 @@ export default {
       });
       this.formData.configJson = { ...defaultConfig };
     },
+    handleVisibleChange(val) {
+      this.dialogVisible = val;
+      this.$emit('update:visible', val);
+      if (!val) {
+        this.resetForm();
+      }
+    },
+
+    handleClose() {
+      this.saving = false;
+      this.$emit('update:visible', false);
+    },
     initDynamicConfig() {
       const newConfig = {};
       this.providerFields.forEach(field => {
@@ -179,8 +192,11 @@ export default {
       this.formData.configJson = newConfig;
     },
     confirm() {
+      this.saving = true;
+
       if (!this.formData.supplier) {
         this.$message.error('请选择供应器');
+        this.saving = false;
         return;
       }
 
@@ -200,11 +216,18 @@ export default {
         }
       };
 
-      this.$emit('confirm', submitData);
-      this.$emit('update:visible', false);
-      this.resetForm();
+      try {
+        this.$emit('confirm', submitData);
+        this.$emit('update:visible', false);
+        this.resetForm();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.saving = false;
+      }
     },
     resetForm() {
+      this.saving = false;
       this.formData = {
         modelName: '',
         modelCode: '',
@@ -223,10 +246,6 @@ export default {
       this.providerFields = [];
       this.currentProvider = null;
     },
-    handleClose() {
-      this.resetForm();
-      this.$emit('update:visible', false);
-    }
   }
 }
 </script>
@@ -252,7 +271,7 @@ export default {
 }
 
 .center-dialog .el-dialog {
-  margin: 4% 0 auto !important;
+  margin: 0 0 auto !important;
   display: flex;
   flex-direction: column;
 }

@@ -64,5 +64,12 @@ public interface SysUserService extends BaseService<SysUserEntity> {
      * @param status  用户状态
      * @param userIds 用户ID数组
      */
-    void changeStatus(Integer status, Long[] userIds);
+    void changeStatus(Integer status, String[] userIds);
+
+    /**
+     * 获取是否允许用户注册
+     * 
+     * @return 是否允许用户注册
+     */
+    boolean getAllowUserRegister();
 }

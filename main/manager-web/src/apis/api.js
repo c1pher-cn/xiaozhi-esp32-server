@@ -2,9 +2,11 @@
 import admin from './module/admin.js'
 import agent from './module/agent.js'
 import device from './module/device.js'
+import dict from './module/dict.js'
 import model from './module/model.js'
+import ota from './module/ota.js'
+import timbre from "./module/timbre.js"
 import user from './module/user.js'
-
 /**
  * 接口地址
  * 开发时自动读取使用.env.development文件
@@ -29,4 +31,7 @@ export default {
     agent,
     device,
     model,
+    timbre,
+    ota,
+    dict
 }
